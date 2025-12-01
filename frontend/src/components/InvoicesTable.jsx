@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateInvoiceField } from '../store/invoicesSlice';
+import { recalculateCustomerTotals } from '../store/customersSlice';
+import { recalculateProductsFromInvoices } from '../store/productsSlice';
 import { isMissing, formatCurrency } from '../utils/helpers';
 
 function InvoicesTable() {
   const dispatch = useDispatch();
   const invoices = useSelector((state) => state.invoices.data);
+  const products = useSelector((state) => state.products.data);
+  const customers = useSelector((state) => state.customers.data);
 
   const handleFieldChange = (index, field, value) => {
     dispatch(updateInvoiceField({ index, field, value }));
+    
+    // Trigger recalculations after state updates
+    setTimeout(() => {
+      // If quantity, total_amount, product_name, or customer_name changes
+      if (field === 'quantity' || field === 'total_amount' || field === 'product_name' || field === 'customer_name') {
+        // Get updated invoices from store
+        const updatedInvoices = [...invoices];
+        updatedInvoices[index] = { ...updatedInvoices[index], [field]: value };
+        
+        // Recalculate product aggregates
+        dispatch(recalculateProductsFromInvoices(updatedInvoices));
+        
+        // Recalculate customer totals
+        dispatch(recalculateCustomerTotals(updatedInvoices));
+      }
+    }, 0);
   };
 
   if (invoices.length === 0) {
@@ -69,15 +89,41 @@ function InvoicesTable() {
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.customer_name) ? 'bg-yellow-50 text-yellow-800' : ''
+                  isMissing(invoice.customer_name) ? 'bg-yellow-50' : ''
                 }`}>
-                  {invoice.customer_name}
+                  <select
+                    value={invoice.customer_name}
+                    onChange={(e) => handleFieldChange(index, 'customer_name', e.target.value)}
+                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer ${
+                      isMissing(invoice.customer_name) ? 'text-yellow-800' : ''
+                    }`}
+                  >
+                    <option value="MISSING">Select Customer</option>
+                    {customers.map((customer, i) => (
+                      <option key={i} value={customer.customer_name}>
+                        {customer.customer_name}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.product_name) ? 'bg-yellow-50 text-yellow-800' : ''
+                  isMissing(invoice.product_name) ? 'bg-yellow-50' : ''
                 }`}>
-                  {invoice.product_name}
+                  <select
+                    value={invoice.product_name}
+                    onChange={(e) => handleFieldChange(index, 'product_name', e.target.value)}
+                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer ${
+                      isMissing(invoice.product_name) ? 'text-yellow-800' : ''
+                    }`}
+                  >
+                    <option value="MISSING">Select Product</option>
+                    {products.map((product, i) => (
+                      <option key={i} value={product.name}>
+                        {product.name}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 
                 <td className="px-4 py-3 text-sm">
@@ -90,21 +136,35 @@ function InvoicesTable() {
                   />
                 </td>
                 
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  {formatCurrency(invoice.tax)}
+                <td className="px-4 py-3 text-sm">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={invoice.tax}
+                    onChange={(e) => handleFieldChange(index, 'tax', parseFloat(e.target.value) || 0)}
+                    className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+                    min="0"
+                  />
                 </td>
                 
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                  {formatCurrency(invoice.total_amount)}
+                <td className="px-4 py-3 text-sm">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={invoice.total_amount}
+                    onChange={(e) => handleFieldChange(index, 'total_amount', parseFloat(e.target.value) || 0)}
+                    className="w-24 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 font-medium"
+                    min="0"
+                  />
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.date) ? 'bg-yellow-50 text-yellow-800' : ''
+                  isMissing(invoice.date) ? 'bg-yellow-50' : ''
                 }`}>
                   <input
-                    type="text"
-                    value={invoice.date}
-                    onChange={(e) => handleFieldChange(index, 'date', e.target.value)}
+                    type="date"
+                    value={invoice.date !== 'MISSING' ? invoice.date : ''}
+                    onChange={(e) => handleFieldChange(index, 'date', e.target.value || 'MISSING')}
                     className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 ${
                       isMissing(invoice.date) ? 'text-yellow-800' : ''
                     }`}
@@ -113,7 +173,7 @@ function InvoicesTable() {
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.payment_mode) ? 'bg-yellow-50 text-yellow-800' : ''
+                  isMissing(invoice.payment_mode) ? 'bg-yellow-50' : ''
                 }`}>
                   <input
                     type="text"
@@ -131,8 +191,15 @@ function InvoicesTable() {
         </table>
       </div>
       
-      <div className="bg-gray-50 px-4 py-3 border-t text-sm text-gray-600">
-        Total Invoices: <span className="font-medium">{invoices.length}</span>
+      <div className="bg-gray-50 px-4 py-3 border-t text-sm text-gray-600 flex justify-between items-center">
+        <div>
+          Total Invoices: <span className="font-medium">{invoices.length}</span>
+        </div>
+        <div>
+          Grand Total: <span className="font-medium">
+            {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0))}
+          </span>
+        </div>
       </div>
     </div>
   );

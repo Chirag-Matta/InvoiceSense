@@ -98,7 +98,7 @@ function CustomersTable() {
                       className={`cursor-pointer hover:bg-gray-100 px-2 py-1 rounded ${
                         isMissing(customer.customer_name) ? 'text-yellow-800' : ''
                       }`}
-                      title="Click to edit"
+                      title="Click to edit - will update all invoices"
                     >
                       {customer.customer_name || 'MISSING'}
                     </div>
@@ -119,8 +119,9 @@ function CustomersTable() {
                   />
                 </td>
                 
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                <td className="px-4 py-3 text-sm font-medium text-green-600">
                   {formatCurrency(customer.total_purchase_amount)}
+                  <span className="text-xs text-gray-500 ml-1">(auto-calculated)</span>
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
@@ -157,7 +158,14 @@ function CustomersTable() {
       </div>
       
       <div className="bg-gray-50 px-4 py-3 border-t text-sm text-gray-600">
-        Total Customers: <span className="font-medium">{customers.length}</span>
+        <div className="flex justify-between items-center">
+          <div>
+            Total Customers: <span className="font-medium">{customers.length}</span>
+          </div>
+          <div className="text-xs text-gray-500 italic">
+            💡 Purchase amounts are auto-calculated from invoices
+          </div>
+        </div>
       </div>
     </div>
   );

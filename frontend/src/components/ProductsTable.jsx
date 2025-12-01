@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateProductName, updateProductField } from '../store/productsSlice';
-import { updateInvoicesByProductName } from '../store/invoicesSlice';
+import { updateInvoicesByProductName, updateInvoicesByProductPricing } from '../store/invoicesSlice';
+import { recalculateCustomerTotals } from '../store/customersSlice';
 import { isMissing, formatCurrency } from '../utils/helpers';
 
 function ProductsTable() {
   const dispatch = useDispatch();
   const products = useSelector((state) => state.products.data);
+  const invoices = useSelector((state) => state.invoices.data);
   const [editingName, setEditingName] = useState(null);
   const [tempName, setTempName] = useState('');
 
@@ -38,7 +40,29 @@ function ProductsTable() {
       ? parseInt(value) || 0
       : value;
 
+    // Update product field
     dispatch(updateProductField({ productName, field, value: parsedValue }));
+
+    // If price or tax changed, update all invoices with this product
+    if (field === 'unit_price' || field === 'tax') {
+      const product = products.find(p => p.name === productName);
+      if (product) {
+        const unit_price = field === 'unit_price' ? parsedValue : product.unit_price;
+        const tax = field === 'tax' ? parsedValue : product.tax;
+        
+        // Update all invoices with this product
+        dispatch(updateInvoicesByProductPricing({ 
+          productName, 
+          unit_price, 
+          tax 
+        }));
+        
+        // Recalculate customer totals after invoice amounts change
+        setTimeout(() => {
+          dispatch(recalculateCustomerTotals(invoices));
+        }, 100);
+      }
+    }
   };
 
   if (products.length === 0) {
@@ -59,16 +83,16 @@ function ProductsTable() {
                 Product Name
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                Quantity
+                Total Quantity
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                 Unit Price
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                Tax
+                Total Tax
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                Price with Tax
+                Total with Tax
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                 Discount
@@ -106,47 +130,38 @@ function ProductsTable() {
                       className={`cursor-pointer hover:bg-gray-100 px-2 py-1 rounded ${
                         isMissing(product.name) ? 'text-yellow-800' : ''
                       }`}
-                      title="Click to edit"
+                      title="Click to edit - will update all invoices"
                     >
                       {product.name || 'MISSING'}
                     </div>
                   )}
                 </td>
                 
-                <td className="px-4 py-3 text-sm">
-                  <input
-                    type="number"
-                    value={product.quantity}
-                    onChange={(e) => handleFieldChange(product.name, 'quantity', e.target.value)}
-                    className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
-                    min="0"
-                  />
+                <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                  {product.quantity}
+                  <span className="text-xs text-gray-500 ml-1">(aggregated)</span>
                 </td>
                 
                 <td className="px-4 py-3 text-sm">
                   <input
                     type="number"
                     step="0.01"
-                    value={product.unit_price}
+                    value={product.unit_price.toFixed(2)}
                     onChange={(e) => handleFieldChange(product.name, 'unit_price', e.target.value)}
                     className="w-24 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
                     min="0"
+                    title="Changes will update all invoices with this product"
                   />
                 </td>
                 
-                <td className="px-4 py-3 text-sm">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={product.tax}
-                    onChange={(e) => handleFieldChange(product.name, 'tax', e.target.value)}
-                    className="w-24 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
-                    min="0"
-                  />
+                <td className="px-4 py-3 text-sm font-medium text-gray-700">
+                  {formatCurrency(product.tax)}
+                  <span className="text-xs text-gray-500 ml-1">(total)</span>
                 </td>
                 
                 <td className="px-4 py-3 text-sm font-medium text-gray-900">
                   {formatCurrency(product.price_with_tax)}
+                  <span className="text-xs text-gray-500 ml-1">(total)</span>
                 </td>
                 
                 <td className="px-4 py-3 text-sm">
@@ -180,7 +195,14 @@ function ProductsTable() {
       </div>
       
       <div className="bg-gray-50 px-4 py-3 border-t text-sm text-gray-600">
-        Total Products: <span className="font-medium">{products.length}</span>
+        <div className="flex justify-between items-center">
+          <div>
+            Total Products: <span className="font-medium">{products.length}</span>
+          </div>
+          <div className="text-xs text-gray-500 italic">
+            💡 Quantities shown are aggregated from all invoices
+          </div>
+        </div>
       </div>
     </div>
   );
