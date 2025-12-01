@@ -19,16 +19,6 @@ const invoicesSlice = createSlice({
       const { index, field, value } = action.payload;
       if (state.data[index]) {
         state.data[index][field] = value;
-        
-        // Recalculate total_amount if quantity changes
-        if (field === 'quantity') {
-          const invoice = state.data[index];
-          // Assuming total = (unit_price * quantity) + tax
-          // If we don't have unit_price, we keep the existing total
-          if (invoice.unit_price) {
-            invoice.total_amount = (invoice.unit_price * value) + (invoice.tax || 0);
-          }
-        }
       }
     },
     updateInvoicesByProductName: (state, action) => {
@@ -47,17 +37,19 @@ const invoicesSlice = createSlice({
           : invoice
       );
     },
-    // NEW: Update invoices when product pricing changes
+    // Updated: Use per-unit tax calculation
     updateInvoicesByProductPricing: (state, action) => {
-      const { productName, unit_price, tax } = action.payload;
+      const { productName, unit_price, taxPerUnit } = action.payload;
       state.data = state.data.map(invoice => {
         if (invoice.product_name === productName) {
-          const newTotal = (unit_price * invoice.quantity) + tax;
+          const quantity = invoice.quantity || 1;
+          const newTax = taxPerUnit * quantity;
+          const newTotal = (unit_price * quantity) + newTax;
+          
           return {
             ...invoice,
-            tax: tax,
-            total_amount: newTotal,
-            unit_price: unit_price // Store unit_price for future calculations
+            tax: newTax,
+            total_amount: newTotal
           };
         }
         return invoice;
