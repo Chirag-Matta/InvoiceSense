@@ -1,32 +1,5 @@
-# Force Python 3.12
-[variables]
-PYTHON_VERSION = "3.12"
-
-# Install all required system libraries to fix ssl, zlib, bz2, lzma, sqlite, ctypes, pillow
 [phases.setup]
-nixPkgs = [
-  "python312",
-  "python312Full",
-  "python312Packages.pip",
-  "openssl",
-  "zlib",
-  "bzip2",
-  "xz",
-  "sqlite",
-  "libffi",
-  "readline",
-  "gdbm",
-  "tk",
-  "gcc",
-  "pkg-config"
-]
-
-# Install Python dependencies
-[phases.install]
-cmds = [
-  "pip install --upgrade pip setuptools wheel",
-  "pip install -r requirements.txt"
-]
+nixPkgs = ["python312"]
 
 [start]
 cmd = "python main.py"
