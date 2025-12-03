@@ -13,7 +13,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Local development
-        "https://invoice-sense.vercel.app/",   # All Vercel preview URLs
+        "https://invoice-sense.vercel.app/",  
+         # All Vercel preview URLs
         # Add your production URL after Vercel deployment
     ],
     allow_credentials=True,
