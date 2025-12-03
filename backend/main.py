@@ -12,15 +12,15 @@ app = FastAPI(title="Invoice Extraction API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Local development
-        "https://invoice-sense.vercel.app/",  
-         # All Vercel preview URLs
-        # Add your production URL after Vercel deployment
+        "http://localhost:3000",
+        "https://invoice-sense.vercel.app",
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Create uploads directory
 os.makedirs("uploads", exist_ok=True)
