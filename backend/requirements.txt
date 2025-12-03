@@ -15,9 +15,8 @@ Pillow==11.0.0
 # Google Gemini AI
 google-generativeai==0.3.2
 
-# PDF Processing (choose one or both)
-PyMuPDF==1.23.8
-pdf2image==1.17.0
+# PDF Processing - Updated to newer version with pre-built wheels
+PyMuPDF==1.24.0
 
 # Data Validation
 pydantic==2.5.3
