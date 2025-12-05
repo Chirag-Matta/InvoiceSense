@@ -7,6 +7,7 @@ import StatusMessage from '../components/StatusMessage';
 import InvoicesTable from '../components/InvoicesTable';
 import ProductsTable from '../components/ProductsTable';
 import CustomersTable from '../components/CustomersTable';
+import ThemeToggle from '../components/ThemeToggle';
 import { setInvoices, setLoading, setError, setSuccess, clearMessages } from '../store/invoicesSlice';
 import { setProducts } from '../store/productsSlice';
 import { setCustomers } from '../store/customersSlice';
@@ -57,16 +58,19 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Invoice Management System
-          </h1>
-          <p className="text-sm text-gray-600 mt-2">
-            AI-Powered Data Extraction & Management Platform
-          </p>
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Invoice Management System
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              AI-Powered Data Extraction & Management Platform
+            </p>
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -88,7 +92,7 @@ function Dashboard() {
         {invoices.length > 0 && (
           <div className="mt-8">
             {/* Tab Navigation */}
-            <div className="border-b border-gray-200 mb-6">
+            <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
               <nav className="flex gap-4">
                 <TabButton
                   active={activeTab === 'invoices'}
@@ -122,9 +126,9 @@ function Dashboard() {
             </div>
 
             {/* Info Panel */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-blue-900 mb-2">💡 Pro Tips:</h3>
-              <ul className="text-sm text-blue-800 space-y-1">
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">💡 Pro Tips:</h3>
+              <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                 <li>• Yellow highlighted fields indicate missing data - click to edit</li>
                 <li>• Edit product/customer names to auto-update all related invoices</li>
                 <li>• All changes are synchronized in real-time across tabs</li>
@@ -137,33 +141,33 @@ function Dashboard() {
         {/* Empty State */}
         {invoices.length === 0 && !loading && (
           <div className="mt-16 text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
-              <FileText className="w-10 h-10 text-gray-400" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-6">
+              <FileText className="w-10 h-10 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               No Data Yet
             </h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
               Upload an invoice file (Excel, PDF, or Image) to get started with automated data extraction
             </p>
-            <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
+            <div className="flex items-center justify-center gap-8 text-sm text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-600 font-semibold">1</span>
+                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <span className="text-green-600 dark:text-green-400 font-semibold">1</span>
                 </div>
                 <span>Upload File</span>
               </div>
-              <div className="w-8 h-0.5 bg-gray-300"></div>
+              <div className="w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-600 font-semibold">2</span>
+                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <span className="text-green-600 dark:text-green-400 font-semibold">2</span>
                 </div>
                 <span>AI Extracts Data</span>
               </div>
-              <div className="w-8 h-0.5 bg-gray-300"></div>
+              <div className="w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-600 font-semibold">3</span>
+                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <span className="text-green-600 dark:text-green-400 font-semibold">3</span>
                 </div>
                 <span>View & Edit</span>
               </div>
@@ -173,8 +177,8 @@ function Dashboard() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t mt-16">
-        <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-600">
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16">
+        <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-600 dark:text-gray-400">
           <p>Built with React, Redux Toolkit, FastAPI & Gemini AI</p>
         </div>
       </footer>

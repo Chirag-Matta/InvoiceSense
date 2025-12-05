@@ -21,7 +21,7 @@ code {
     monospace;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Light mode */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -38,6 +38,19 @@ code {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Custom scrollbar - Dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 /* Table input focus styles */
@@ -59,4 +72,14 @@ input:focus {
 
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
+}
+
+/* Dark mode color scheme for form elements */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Smooth transitions for theme switching */
+html {
+  transition: background-color 0.2s ease;
 }

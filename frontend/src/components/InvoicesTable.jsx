@@ -163,74 +163,74 @@ function InvoicesTable() {
 
   if (invoices.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
-        <p className="text-gray-500">No invoices to display</p>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
+        <p className="text-gray-500 dark:text-gray-400">No invoices to display</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Serial No
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Customer
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Product
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Quantity
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Tax
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Total
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Date
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Payment
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
             {invoices.map((invoice, index) => (
-              <tr key={index} className="hover:bg-gray-50">
+              <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.serial_number) ? 'bg-yellow-50' : ''
+                  isMissing(invoice.serial_number) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
                 }`}>
                   <input
                     type="text"
                     value={invoice.serial_number}
                     onChange={(e) => handleFieldChange(index, 'serial_number', e.target.value)}
-                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 ${
-                      isMissing(invoice.serial_number) ? 'text-yellow-800' : ''
+                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-gray-200 ${
+                      isMissing(invoice.serial_number) ? 'text-yellow-800 dark:text-yellow-400' : ''
                     }`}
                     placeholder="Serial No"
                   />
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.customer_name) ? 'bg-yellow-50' : ''
+                  isMissing(invoice.customer_name) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
                 }`}>
                   <select
                     value={invoice.customer_name}
                     onChange={(e) => handleFieldChange(index, 'customer_name', e.target.value)}
-                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer ${
-                      isMissing(invoice.customer_name) ? 'text-yellow-800' : ''
+                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer dark:text-gray-200 ${
+                      isMissing(invoice.customer_name) ? 'text-yellow-800 dark:text-yellow-400' : ''
                     }`}
                   >
-                    <option value="MISSING">Select Customer</option>
+                    <option value="MISSING" className="dark:bg-gray-700">Select Customer</option>
                     {customers.map((customer, i) => (
-                      <option key={i} value={customer.customer_name}>
+                      <option key={i} value={customer.customer_name} className="dark:bg-gray-700">
                         {customer.customer_name}
                       </option>
                     ))}
@@ -238,19 +238,19 @@ function InvoicesTable() {
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.product_name) ? 'bg-yellow-50' : ''
+                  isMissing(invoice.product_name) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
                 }`}>
                   <select
                     value={invoice.product_name}
                     onChange={(e) => handleFieldChange(index, 'product_name', e.target.value)}
-                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer ${
-                      isMissing(invoice.product_name) ? 'text-yellow-800' : ''
+                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer dark:text-gray-200 ${
+                      isMissing(invoice.product_name) ? 'text-yellow-800 dark:text-yellow-400' : ''
                     }`}
                     title="Selecting a product will load its quantity, price, and tax"
                   >
-                    <option value="MISSING">Select Product</option>
+                    <option value="MISSING" className="dark:bg-gray-700">Select Product</option>
                     {products.map((product, i) => (
-                      <option key={i} value={product.name}>
+                      <option key={i} value={product.name} className="dark:bg-gray-700">
                         {product.name}
                       </option>
                     ))}
@@ -262,7 +262,7 @@ function InvoicesTable() {
                     type="number"
                     value={invoice.quantity}
                     onChange={(e) => handleFieldChange(index, 'quantity', e.target.value)}
-                    className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+                    className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-gray-200"
                     min="0"
                     title="Changes will update tax and total automatically"
                   />
@@ -274,7 +274,7 @@ function InvoicesTable() {
                     step="0.01"
                     value={invoice.tax}
                     onChange={(e) => handleFieldChange(index, 'tax', e.target.value)}
-                    className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+                    className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-gray-200"
                     min="0"
                     title="Changes will update total automatically"
                   />
@@ -286,35 +286,35 @@ function InvoicesTable() {
                     step="0.01"
                     value={invoice.total_amount}
                     onChange={(e) => handleFieldChange(index, 'total_amount', e.target.value)}
-                    className="w-24 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 font-medium"
+                    className="w-24 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 font-medium dark:text-gray-200"
                     min="0"
                     title="Changes will update customer totals"
                   />
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.date) ? 'bg-yellow-50' : ''
+                  isMissing(invoice.date) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
                 }`}>
                   <input
                     type="date"
                     value={invoice.date !== 'MISSING' ? invoice.date : ''}
                     onChange={(e) => handleFieldChange(index, 'date', e.target.value || 'MISSING')}
-                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 ${
-                      isMissing(invoice.date) ? 'text-yellow-800' : ''
+                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-gray-200 ${
+                      isMissing(invoice.date) ? 'text-yellow-800 dark:text-yellow-400' : ''
                     }`}
                     placeholder="YYYY-MM-DD"
                   />
                 </td>
                 
                 <td className={`px-4 py-3 text-sm ${
-                  isMissing(invoice.payment_mode) ? 'bg-yellow-50' : ''
+                  isMissing(invoice.payment_mode) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
                 }`}>
                   <input
                     type="text"
                     value={invoice.payment_mode}
                     onChange={(e) => handleFieldChange(index, 'payment_mode', e.target.value)}
-                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 ${
-                      isMissing(invoice.payment_mode) ? 'text-yellow-800' : ''
+                    className={`w-full border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-gray-200 ${
+                      isMissing(invoice.payment_mode) ? 'text-yellow-800 dark:text-yellow-400' : ''
                     }`}
                     placeholder="Payment Mode"
                   />
@@ -325,7 +325,7 @@ function InvoicesTable() {
         </table>
       </div>
       
-      <div className="bg-gray-50 px-4 py-3 border-t text-sm text-gray-600 flex justify-between items-center">
+      <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-t border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 flex justify-between items-center">
         <div>
           Total Invoices: <span className="font-medium">{invoices.length}</span>
         </div>
