@@ -16,7 +16,7 @@ Pillow==11.0.0
 google-generativeai==0.3.2
 
 # PDF Processing - Updated to newer version with pre-built wheels
-PyMuPDF==1.24.0
+PyMuPDF==1.23.26
 
 # Data Validation
 pydantic==2.5.3
