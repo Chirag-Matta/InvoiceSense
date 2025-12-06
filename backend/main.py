@@ -11,17 +11,13 @@ app = FastAPI(title="Invoice Extraction API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
-    max_age=3600,  # Cache preflight requests for 1 hour
+    max_age=3600,
 )
-
-
 
 # Create uploads directory
 os.makedirs("uploads", exist_ok=True)
@@ -78,6 +74,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    import os
+    # CRITICAL: Railway provides PORT env variable
     port = int(os.getenv("PORT", 8000))
+    # CRITICAL: Must bind to 0.0.0.0 to accept external connections
     uvicorn.run(app, host="0.0.0.0", port=port)

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Change this to your deployed backend URL
-const API_BASE_URL = "https://invoicesense.up.railway.app:8080" ;
+// FIXED: Remove port number - Railway handles this automatically
+const API_BASE_URL = "https://invoicesense.up.railway.app";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
