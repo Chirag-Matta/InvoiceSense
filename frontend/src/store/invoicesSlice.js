@@ -1,4 +1,6 @@
+// frontend/src/store/invoicesSlice.js
 import { createSlice } from '@reduxjs/toolkit';
+import { markUnsavedChanges } from './saveSlice';
 
 const initialState = {
   data: [],
@@ -83,5 +85,26 @@ export const {
   setSuccess,
   clearMessages,
 } = invoicesSlice.actions;
+
+// Thunk to update invoice and mark as changed
+export const updateInvoiceFieldAndMark = (payload) => (dispatch) => {
+  dispatch(updateInvoiceField(payload));
+  dispatch(markUnsavedChanges({ tabName: 'invoices' }));
+};
+
+export const updateInvoicesByProductNameAndMark = (payload) => (dispatch) => {
+  dispatch(updateInvoicesByProductName(payload));
+  dispatch(markUnsavedChanges({ tabName: 'invoices' }));
+};
+
+export const updateInvoicesByCustomerNameAndMark = (payload) => (dispatch) => {
+  dispatch(updateInvoicesByCustomerName(payload));
+  dispatch(markUnsavedChanges({ tabName: 'invoices' }));
+};
+
+export const updateInvoicesByProductPricingAndMark = (payload) => (dispatch) => {
+  dispatch(updateInvoicesByProductPricing(payload));
+  dispatch(markUnsavedChanges({ tabName: 'invoices' }));
+};
 
 export default invoicesSlice.reducer;

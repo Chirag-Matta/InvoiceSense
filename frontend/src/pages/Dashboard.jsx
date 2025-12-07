@@ -1,21 +1,25 @@
-import React, { useState } from 'react';
+// frontend/src/pages/Dashboard.jsx
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { FileText, Package, Users } from 'lucide-react';
+import { FileText, Package, Users, Save, Download } from 'lucide-react';
 import FileUpload from '../components/FileUpload';
 import TabButton from '../components/TabButton';
 import StatusMessage from '../components/StatusMessage';
 import InvoicesTable from '../components/InvoicesTable';
 import ProductsTable from '../components/ProductsTable';
 import CustomersTable from '../components/CustomersTable';
+import SaveButton from '../components/SaveButton';
 import ThemeToggle from '../components/ThemeToggle';
-import { setInvoices, setLoading, setError, setSuccess, clearMessages } from '../store/invoicesSlice';
-import { setProducts } from '../store/productsSlice';
-import { setCustomers } from '../store/customersSlice';
+import { setInvoices, setLoading, setError, setSuccess, clearMessages, markInvoicesChanged } from '../store/invoicesSlice';
+import { setProducts, markProductsChanged } from '../store/productsSlice';
+import { setCustomers, markCustomersChanged } from '../store/customersSlice';
+import { saveTab, saveAll, initializeSavedState } from '../store/saveSlice';
 import { uploadFile } from '../services/api';
 
 function Dashboard() {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('invoices');
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   
   const invoices = useSelector((state) => state.invoices.data);
   const products = useSelector((state) => state.products.data);
@@ -23,6 +27,9 @@ function Dashboard() {
   const loading = useSelector((state) => state.invoices.loading);
   const error = useSelector((state) => state.invoices.error);
   const success = useSelector((state) => state.invoices.success);
+  
+  const hasUnsavedChanges = useSelector((state) => state.save.hasUnsavedChanges);
+  const lastSaved = useSelector((state) => state.save.lastSaved);
 
   const handleFileUpload = async (file) => {
     dispatch(setLoading(true));
@@ -35,9 +42,15 @@ function Dashboard() {
         dispatch(setInvoices(data.invoices || []));
         dispatch(setProducts(data.products || []));
         dispatch(setCustomers(data.customers || []));
-        dispatch(setSuccess(`✓ Successfully extracted ${data.invoices?.length || 0} invoices`));
         
-        // Auto switch to invoices tab
+        // Initialize saved state with uploaded data
+        dispatch(initializeSavedState({
+          invoices: data.invoices || [],
+          products: data.products || [],
+          customers: data.customers || []
+        }));
+        
+        dispatch(setSuccess(`✓ Successfully extracted ${data.invoices?.length || 0} invoices`));
         setActiveTab('invoices');
       } else {
         dispatch(setError(data.message || 'Extraction failed'));
@@ -47,6 +60,44 @@ function Dashboard() {
     } finally {
       dispatch(setLoading(false));
     }
+  };
+
+  const handleSaveTab = (tabName) => {
+    let data;
+    if (tabName === 'invoices') data = invoices;
+    else if (tabName === 'products') data = products;
+    else if (tabName === 'customers') data = customers;
+
+    dispatch(saveTab({ tabName, data }));
+    
+    setShowSaveSuccess(true);
+    setTimeout(() => setShowSaveSuccess(false), 2000);
+  };
+
+  const handleSaveAll = () => {
+    dispatch(saveAll({ invoices, products, customers }));
+    
+    setShowSaveSuccess(true);
+    setTimeout(() => setShowSaveSuccess(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const savedState = {
+      invoices,
+      products,
+      customers,
+      exportDate: new Date().toISOString(),
+      lastSaved
+    };
+    
+    const dataStr = JSON.stringify(savedState, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `invoice-data-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleCloseError = () => {
@@ -61,16 +112,43 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Invoice Management System
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              AI-Powered Data Extraction & Management Platform
-            </p>
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Invoice Management System
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                AI-Powered Data Extraction & Management Platform
+              </p>
+              {lastSaved && (
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Last saved: {new Date(lastSaved).toLocaleString()}
+                </p>
+              )}
+            </div>
+            <div className="flex items-start gap-3">
+              {invoices.length > 0 && (
+                <>
+                  <button
+                    onClick={handleSaveAll}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save All
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
+                </>
+              )}
+              <ThemeToggle />
+            </div>
           </div>
-          <ThemeToggle />
         </div>
       </header>
 
@@ -88,34 +166,78 @@ function Dashboard() {
           <StatusMessage type="success" message={success} onClose={handleCloseSuccess} />
         )}
 
+        {/* Save Success Message */}
+        {showSaveSuccess && (
+          <div className="mt-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3">
+            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">✓</span>
+            </div>
+            <p className="text-green-800 dark:text-green-200 font-medium">Changes saved successfully!</p>
+          </div>
+        )}
+
         {/* Tabs and Tables */}
         {invoices.length > 0 && (
           <div className="mt-8">
             {/* Tab Navigation */}
             <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
               <nav className="flex gap-4">
-                <TabButton
-                  active={activeTab === 'invoices'}
-                  onClick={() => setActiveTab('invoices')}
-                  icon={<FileText className="w-4 h-4" />}
-                  label="Invoices"
-                  count={invoices.length}
-                />
-                <TabButton
-                  active={activeTab === 'products'}
-                  onClick={() => setActiveTab('products')}
-                  icon={<Package className="w-4 h-4" />}
-                  label="Products"
-                  count={products.length}
-                />
-                <TabButton
-                  active={activeTab === 'customers'}
-                  onClick={() => setActiveTab('customers')}
-                  icon={<Users className="w-4 h-4" />}
-                  label="Customers"
-                  count={customers.length}
-                />
+                <div className="relative">
+                  <TabButton
+                    active={activeTab === 'invoices'}
+                    onClick={() => setActiveTab('invoices')}
+                    icon={<FileText className="w-4 h-4" />}
+                    label="Invoices"
+                    count={invoices.length}
+                  />
+                  {hasUnsavedChanges.invoices && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full" title="Unsaved changes" />
+                  )}
+                </div>
+                <div className="relative">
+                  <TabButton
+                    active={activeTab === 'products'}
+                    onClick={() => setActiveTab('products')}
+                    icon={<Package className="w-4 h-4" />}
+                    label="Products"
+                    count={products.length}
+                  />
+                  {hasUnsavedChanges.products && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full" title="Unsaved changes" />
+                  )}
+                </div>
+                <div className="relative">
+                  <TabButton
+                    active={activeTab === 'customers'}
+                    onClick={() => setActiveTab('customers')}
+                    icon={<Users className="w-4 h-4" />}
+                    label="Customers"
+                    count={customers.length}
+                  />
+                  {hasUnsavedChanges.customers && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full" title="Unsaved changes" />
+                  )}
+                </div>
               </nav>
+            </div>
+
+            {/* Save Button for Current Tab */}
+            <div className="mb-4 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                  {activeTab}
+                </h2>
+                {hasUnsavedChanges[activeTab] && (
+                  <p className="text-sm text-orange-600 dark:text-orange-400">
+                    You have unsaved changes
+                  </p>
+                )}
+              </div>
+              <SaveButton
+                onClick={() => handleSaveTab(activeTab)}
+                hasChanges={hasUnsavedChanges[activeTab]}
+                tabName={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              />
             </div>
 
             {/* Tab Content */}
@@ -131,8 +253,9 @@ function Dashboard() {
               <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                 <li>• Yellow highlighted fields indicate missing data - click to edit</li>
                 <li>• Edit product/customer names to auto-update all related invoices</li>
-                <li>• All changes are synchronized in real-time across tabs</li>
-                <li>• Press Enter to save, Escape to cancel when editing names</li>
+                <li>• <strong>Save your changes</strong> using the Save button before switching tabs</li>
+                <li>• Orange dots on tabs indicate unsaved changes</li>
+                <li>• Use "Save All" to save all tabs at once, or "Download" to export as JSON</li>
               </ul>
             </div>
           </div>

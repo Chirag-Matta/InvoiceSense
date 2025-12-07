@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateInvoiceField } from '../store/invoicesSlice';
+import { updateProductField } from '../store/productsSlice';
 import { recalculateCustomerTotals } from '../store/customersSlice';
 import { isMissing, formatCurrency } from '../utils/helpers';
 
@@ -46,9 +47,15 @@ function InvoicesTable() {
         const newTax = taxPerUnit * newQty;
         const newTotal = (product.unit_price * newQty) + newTax;
         
+        // Update the invoice
         dispatch(updateInvoiceField({ index, field: 'quantity', value: newQty }));
         dispatch(updateInvoiceField({ index, field: 'tax', value: newTax }));
         dispatch(updateInvoiceField({ index, field: 'total_amount', value: newTotal }));
+        
+        // ALSO update the product's quantity, tax, and price_with_tax
+        dispatch(updateProductField({ productName: product.name, field: 'quantity', value: newQty }));
+        dispatch(updateProductField({ productName: product.name, field: 'tax', value: newTax }));
+        dispatch(updateProductField({ productName: product.name, field: 'price_with_tax', value: newTotal }));
       } else {
         dispatch(updateInvoiceField({ index, field, value: newQty }));
       }

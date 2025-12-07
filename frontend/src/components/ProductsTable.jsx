@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateProductName, updateProductField } from '../store/productsSlice';
 import { updateInvoicesByProductName, updateInvoicesByProductPricing } from '../store/invoicesSlice';
@@ -11,38 +11,6 @@ function ProductsTable() {
   const invoices = useSelector((state) => state.invoices.data);
   const [editingName, setEditingName] = useState(null);
   const [tempName, setTempName] = useState('');
-
-  // DEBUG: Log what we're getting
-  useEffect(() => {
-    console.log('=== PRODUCTS DATA ===', products);
-    console.log('=== INVOICES DATA ===', invoices);
-  }, [products, invoices]);
-
-  // Calculate from invoices - BUT also show what backend sent
-  const getProductDisplay = (product) => {
-    // Get what backend sent us
-    const backendQuantity = product.quantity || 0;
-    const backendTax = product.tax || 0;
-    const backendTotal = product.price_with_tax || 0;
-    
-    // Calculate from current invoices
-    const productInvoices = invoices.filter(inv => inv.product_name === product.name);
-    const liveQuantity = productInvoices.reduce((sum, inv) => sum + (inv.quantity || 0), 0);
-    const liveTax = productInvoices.reduce((sum, inv) => sum + (inv.tax || 0), 0);
-    const liveTotal = productInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
-    
-    console.log(`Product: ${product.name}`);
-    console.log(`  Backend: qty=${backendQuantity}, tax=${backendTax}, total=${backendTotal}`);
-    console.log(`  Live: qty=${liveQuantity}, tax=${liveTax}, total=${liveTotal}`);
-    console.log(`  Matching invoices:`, productInvoices);
-    
-    // Use live if available, otherwise use backend
-    return {
-      quantity: liveQuantity > 0 ? liveQuantity : backendQuantity,
-      tax: liveTax > 0 ? liveTax : backendTax,
-      total: liveTotal > 0 ? liveTotal : backendTotal
-    };
-  };
 
   const startEdit = (product) => {
     setEditingName(product.name);
@@ -72,10 +40,9 @@ function ProductsTable() {
 
     if (field === 'unit_price') {
       const product = products.find(p => p.name === productName);
-      const display = getProductDisplay(product);
       
-      if (display.quantity > 0) {
-        const taxPerUnit = display.tax / display.quantity;
+      if (product && product.quantity > 0) {
+        const taxPerUnit = product.tax / product.quantity;
         
         setTimeout(() => {
           dispatch(updateInvoicesByProductPricing({ 
@@ -127,10 +94,8 @@ function ProductsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-            {products.map((product, index) => {
-              const display = getProductDisplay(product);
-              
-              return (
+            {products.map((product, index) => (
+
                 <tr key={`product-${index}-${product.name}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className={`px-4 py-3 text-sm ${
                     isMissing(product.name) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
@@ -166,7 +131,7 @@ function ProductsTable() {
                   
                   <td className="px-4 py-3 text-sm">
                     <span className="font-medium text-blue-600 dark:text-blue-400">
-                      {display.quantity}
+                      {product.quantity || 0}
                     </span>
                   </td>
                   
@@ -183,13 +148,13 @@ function ProductsTable() {
                   
                   <td className="px-4 py-3 text-sm">
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {formatCurrency(display.tax)}
+                      {formatCurrency(product.tax || 0)}
                     </span>
                   </td>
                   
                   <td className="px-4 py-3 text-sm">
                     <span className="font-medium text-green-600 dark:text-green-400">
-                      {formatCurrency(display.total)}
+                      {formatCurrency(product.price_with_tax || 0)}
                     </span>
                   </td>
                   
@@ -218,8 +183,7 @@ function ProductsTable() {
                     />
                   </td>
                 </tr>
-              );
-            })}
+            ))}
           </tbody>
         </table>
       </div>
@@ -231,10 +195,7 @@ function ProductsTable() {
           </div>
           <div>
             Grand Total: <span className="font-medium text-green-600 dark:text-green-400">
-              {formatCurrency(products.reduce((sum, p) => {
-                const display = getProductDisplay(p);
-                return sum + display.total;
-              }, 0))}
+              {formatCurrency(products.reduce((sum, p) => sum + (p.price_with_tax || 0), 0))}
             </span>
           </div>
         </div>
