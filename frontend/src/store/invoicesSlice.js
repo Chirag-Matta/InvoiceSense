@@ -37,7 +37,6 @@ const invoicesSlice = createSlice({
           : invoice
       );
     },
-    // Updated: Use per-unit tax calculation
     updateInvoicesByProductPricing: (state, action) => {
       const { productName, unit_price, taxPerUnit } = action.payload;
       state.data = state.data.map(invoice => {

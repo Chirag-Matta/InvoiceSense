@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateProductName, updateProductField } from '../store/productsSlice';
 import { updateInvoicesByProductName, updateInvoicesByProductPricing } from '../store/invoicesSlice';
@@ -12,18 +12,35 @@ function ProductsTable() {
   const [editingName, setEditingName] = useState(null);
   const [tempName, setTempName] = useState('');
 
-  // Calculate real-time aggregates from invoices
-  const getProductAggregates = (productName) => {
-    const productInvoices = invoices.filter(inv => inv.product_name === productName);
+  // DEBUG: Log what we're getting
+  useEffect(() => {
+    console.log('=== PRODUCTS DATA ===', products);
+    console.log('=== INVOICES DATA ===', invoices);
+  }, [products, invoices]);
+
+  // Calculate from invoices - BUT also show what backend sent
+  const getProductDisplay = (product) => {
+    // Get what backend sent us
+    const backendQuantity = product.quantity || 0;
+    const backendTax = product.tax || 0;
+    const backendTotal = product.price_with_tax || 0;
     
-    const totalQuantity = productInvoices.reduce((sum, inv) => sum + (inv.quantity || 0), 0);
-    const totalTax = productInvoices.reduce((sum, inv) => sum + (inv.tax || 0), 0);
-    const totalWithTax = productInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+    // Calculate from current invoices
+    const productInvoices = invoices.filter(inv => inv.product_name === product.name);
+    const liveQuantity = productInvoices.reduce((sum, inv) => sum + (inv.quantity || 0), 0);
+    const liveTax = productInvoices.reduce((sum, inv) => sum + (inv.tax || 0), 0);
+    const liveTotal = productInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
     
+    console.log(`Product: ${product.name}`);
+    console.log(`  Backend: qty=${backendQuantity}, tax=${backendTax}, total=${backendTotal}`);
+    console.log(`  Live: qty=${liveQuantity}, tax=${liveTax}, total=${liveTotal}`);
+    console.log(`  Matching invoices:`, productInvoices);
+    
+    // Use live if available, otherwise use backend
     return {
-      quantity: totalQuantity,
-      tax: totalTax,
-      priceWithTax: totalWithTax
+      quantity: liveQuantity > 0 ? liveQuantity : backendQuantity,
+      tax: liveTax > 0 ? liveTax : backendTax,
+      total: liveTotal > 0 ? liveTotal : backendTotal
     };
   };
 
@@ -34,9 +51,7 @@ function ProductsTable() {
 
   const saveEdit = (oldName) => {
     if (tempName && tempName !== oldName && tempName.trim() !== '') {
-      // Update product name
       dispatch(updateProductName({ oldName, newName: tempName }));
-      // Update all invoices with this product
       dispatch(updateInvoicesByProductName({ oldName, newName: tempName }));
     }
     setEditingName(null);
@@ -49,51 +64,27 @@ function ProductsTable() {
   };
 
   const handleFieldChange = (productName, field, value) => {
-    const parsedValue = field === 'unit_price' || field === 'tax' || field === 'discount'
+    const parsedValue = field === 'unit_price' || field === 'discount'
       ? parseFloat(value) || 0
       : value;
 
-    // Update product field
     dispatch(updateProductField({ productName, field, value: parsedValue }));
 
-    // If price or tax changed, update ALL invoices with this product
-    if (field === 'unit_price' || field === 'tax') {
+    if (field === 'unit_price') {
       const product = products.find(p => p.name === productName);
-      if (product) {
-        const unit_price = field === 'unit_price' ? parsedValue : product.unit_price;
-        const totalTax = field === 'tax' ? parsedValue : product.tax;
+      const display = getProductDisplay(product);
+      
+      if (display.quantity > 0) {
+        const taxPerUnit = display.tax / display.quantity;
         
-        // Calculate per-unit tax for invoice recalculation
-        const taxPerUnit = totalTax / (product.quantity || 1);
-        
-        // Update all invoices with this product
         setTimeout(() => {
-          // Get current invoices for this product
-          const updatedInvoices = invoices.map(invoice => {
-            if (invoice.product_name === productName) {
-              const invoiceQty = invoice.quantity || 1;
-              const newInvoiceTax = taxPerUnit * invoiceQty;
-              const newTotal = (unit_price * invoiceQty) + newInvoiceTax;
-              
-              return {
-                ...invoice,
-                tax: newInvoiceTax,
-                total_amount: newTotal
-              };
-            }
-            return invoice;
-          });
-          
-          // Dispatch updates
           dispatch(updateInvoicesByProductPricing({ 
             productName, 
-            unit_price, 
+            unit_price: parsedValue, 
             taxPerUnit
           }));
-          
-          // Recalculate customer totals
-          dispatch(recalculateCustomerTotals(updatedInvoices));
-        }, 100);
+          dispatch(recalculateCustomerTotals(invoices));
+        }, 0);
       }
     }
   };
@@ -137,11 +128,10 @@ function ProductsTable() {
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
             {products.map((product, index) => {
-              // Get live aggregated data from invoices
-              const aggregates = getProductAggregates(product.name);
+              const display = getProductDisplay(product);
               
               return (
-                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <tr key={`product-${index}-${product.name}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className={`px-4 py-3 text-sm ${
                     isMissing(product.name) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
                   }`}>
@@ -167,7 +157,7 @@ function ProductsTable() {
                         className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-2 py-1 rounded dark:text-gray-200 ${
                           isMissing(product.name) ? 'text-yellow-800 dark:text-yellow-400' : ''
                         }`}
-                        title="Click to edit - will update all invoices"
+                        title="Click to edit"
                       >
                         {product.name || 'MISSING'}
                       </div>
@@ -175,14 +165,9 @@ function ProductsTable() {
                   </td>
                   
                   <td className="px-4 py-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-blue-600 dark:text-blue-400">
-                        {aggregates.quantity}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        (live aggregated)
-                      </span>
-                    </div>
+                    <span className="font-medium text-blue-600 dark:text-blue-400">
+                      {display.quantity}
+                    </span>
                   </td>
                   
                   <td className="px-4 py-3 text-sm">
@@ -193,31 +178,19 @@ function ProductsTable() {
                       onChange={(e) => handleFieldChange(product.name, 'unit_price', e.target.value)}
                       className="w-24 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-gray-200"
                       min="0"
-                      title="⚡ Changes will update ALL invoices with this product"
                     />
                   </td>
                   
                   <td className="px-4 py-3 text-sm">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={product.tax.toFixed(2)}
-                      onChange={(e) => handleFieldChange(product.name, 'tax', e.target.value)}
-                      className="w-24 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-gray-200"
-                      min="0"
-                      title="⚡ Changes will update ALL invoices with this product"
-                    />
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {formatCurrency(display.tax)}
+                    </span>
                   </td>
                   
                   <td className="px-4 py-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(aggregates.priceWithTax)}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        (live total)
-                      </span>
-                    </div>
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      {formatCurrency(display.total)}
+                    </span>
                   </td>
                   
                   <td className="px-4 py-3 text-sm">
@@ -232,7 +205,7 @@ function ProductsTable() {
                   </td>
                   
                   <td className={`px-4 py-3 text-sm ${
-                    isMissing(product.sku) ? 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' : ''
+                    isMissing(product.sku) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
                   }`}>
                     <input
                       type="text"
@@ -256,8 +229,13 @@ function ProductsTable() {
           <div>
             Total Products: <span className="font-medium">{products.length}</span>
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 italic">
-            💡 Quantities & totals calculated live from invoices | ⚡ Price/Tax changes sync to all invoices
+          <div>
+            Grand Total: <span className="font-medium text-green-600 dark:text-green-400">
+              {formatCurrency(products.reduce((sum, p) => {
+                const display = getProductDisplay(p);
+                return sum + display.total;
+              }, 0))}
+            </span>
           </div>
         </div>
       </div>
