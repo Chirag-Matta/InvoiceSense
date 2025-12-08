@@ -30,6 +30,12 @@ function InvoicesTable() {
         dispatch(updateInvoiceField({ index, field: 'quantity', value: qty }));
         dispatch(updateInvoiceField({ index, field: 'tax', value: tax }));
         dispatch(updateInvoiceField({ index, field: 'total_amount', value: total }));
+        
+        // Recalculate customer totals with updated invoice
+        const updatedInvoices = invoices.map((inv, i) => 
+          i === index ? { ...inv, product_name: value, quantity: qty, tax: tax, total_amount: total } : inv
+        );
+        setTimeout(() => dispatch(recalculateCustomerTotals(updatedInvoices)), 0);
       } else {
         dispatch(updateInvoiceField({ index, field, value }));
       }
@@ -56,11 +62,15 @@ function InvoicesTable() {
         dispatch(updateProductField({ productName: product.name, field: 'quantity', value: newQty }));
         dispatch(updateProductField({ productName: product.name, field: 'tax', value: newTax }));
         dispatch(updateProductField({ productName: product.name, field: 'price_with_tax', value: newTotal }));
+        
+        // Recalculate customer totals with updated invoice
+        const updatedInvoices = invoices.map((inv, i) => 
+          i === index ? { ...inv, quantity: newQty, tax: newTax, total_amount: newTotal } : inv
+        );
+        setTimeout(() => dispatch(recalculateCustomerTotals(updatedInvoices)), 0);
       } else {
         dispatch(updateInvoiceField({ index, field, value: newQty }));
       }
-      
-      setTimeout(() => dispatch(recalculateCustomerTotals(invoices)), 0);
       return;
     }
     
@@ -71,25 +81,46 @@ function InvoicesTable() {
       
       if (product && product.unit_price) {
         const newTotal = (product.unit_price * invoice.quantity) + newTax;
+        
+        // Update the invoice
         dispatch(updateInvoiceField({ index, field: 'tax', value: newTax }));
         dispatch(updateInvoiceField({ index, field: 'total_amount', value: newTotal }));
+        
+        // ALSO update the product's tax and price_with_tax
+        dispatch(updateProductField({ productName: product.name, field: 'tax', value: newTax }));
+        dispatch(updateProductField({ productName: product.name, field: 'price_with_tax', value: newTotal }));
+        
+        // Recalculate customer totals with updated invoice
+        const updatedInvoices = invoices.map((inv, i) => 
+          i === index ? { ...inv, tax: newTax, total_amount: newTotal } : inv
+        );
+        setTimeout(() => dispatch(recalculateCustomerTotals(updatedInvoices)), 0);
       } else {
         dispatch(updateInvoiceField({ index, field, value: newTax }));
       }
-      
-      setTimeout(() => dispatch(recalculateCustomerTotals(invoices)), 0);
       return;
     }
     
     if (field === 'total_amount') {
-      dispatch(updateInvoiceField({ index, field, value: parseFloat(value) || 0 }));
-      setTimeout(() => dispatch(recalculateCustomerTotals(invoices)), 0);
+      const newTotal = parseFloat(value) || 0;
+      dispatch(updateInvoiceField({ index, field, value: newTotal }));
+      
+      // Recalculate customer totals with updated invoice
+      const updatedInvoices = invoices.map((inv, i) => 
+        i === index ? { ...inv, total_amount: newTotal } : inv
+      );
+      setTimeout(() => dispatch(recalculateCustomerTotals(updatedInvoices)), 0);
       return;
     }
     
     if (field === 'customer_name') {
       dispatch(updateInvoiceField({ index, field, value }));
-      setTimeout(() => dispatch(recalculateCustomerTotals(invoices)), 0);
+      
+      // Recalculate customer totals with updated invoice
+      const updatedInvoices = invoices.map((inv, i) => 
+        i === index ? { ...inv, customer_name: value } : inv
+      );
+      setTimeout(() => dispatch(recalculateCustomerTotals(updatedInvoices)), 0);
       return;
     }
     

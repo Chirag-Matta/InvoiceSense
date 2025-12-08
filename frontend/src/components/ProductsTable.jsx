@@ -38,12 +38,22 @@ function ProductsTable() {
 
     dispatch(updateProductField({ productName, field, value: parsedValue }));
 
+    const product = products.find(p => p.name === productName);
+    if (!product) return;
+
     if (field === 'unit_price') {
-      const product = products.find(p => p.name === productName);
+      // Recalculate price_with_tax when unit_price changes
+      const quantity = product.quantity || 1;
+      const tax = product.tax || 0;
+      const discount = product.discount || 0;
+      const newPriceWithTax = (parsedValue * quantity) + tax - discount;
       
-      if (product && product.quantity > 0) {
-        const taxPerUnit = product.tax / product.quantity;
-        
+      // Update product's price_with_tax
+      dispatch(updateProductField({ productName, field: 'price_with_tax', value: newPriceWithTax }));
+      
+      // Update all invoices with this product
+      if (quantity > 0) {
+        const taxPerUnit = tax / quantity;
         setTimeout(() => {
           dispatch(updateInvoicesByProductPricing({ 
             productName, 
@@ -53,6 +63,17 @@ function ProductsTable() {
           dispatch(recalculateCustomerTotals(invoices));
         }, 0);
       }
+    }
+    
+    if (field === 'discount') {
+      // Recalculate price_with_tax when discount changes
+      const quantity = product.quantity || 1;
+      const tax = product.tax || 0;
+      const unitPrice = product.unit_price || 0;
+      const newPriceWithTax = (unitPrice * quantity) + tax - parsedValue;
+      
+      // Update product's price_with_tax
+      dispatch(updateProductField({ productName, field: 'price_with_tax', value: newPriceWithTax }));
     }
   };
 

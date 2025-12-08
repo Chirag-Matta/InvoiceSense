@@ -7,15 +7,13 @@ import { isMissing, formatCurrency } from '../utils/helpers';
 function CustomersTable() {
   const dispatch = useDispatch();
   const customers = useSelector((state) => state.customers.data);
-  const invoices = useSelector((state) => state.invoices.data);
+  const products = useSelector((state) => state.products.data);
   const [editingName, setEditingName] = useState(null);
   const [tempName, setTempName] = useState('');
 
-  // Calculate real-time total from invoices for display
-  const getCustomerTotal = (customerName) => {
-    return invoices
-      .filter(inv => inv.customer_name === customerName)
-      .reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+  // Calculate total from ALL products (sum of all price_with_tax)
+  const getTotalExpenses = () => {
+    return products.reduce((sum, product) => sum + (product.price_with_tax || 0), 0);
   };
 
   const startEdit = (customer) => {
@@ -80,11 +78,7 @@ function CustomersTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-            {customers.map((customer, index) => {
-              // Get real-time calculated total
-              const calculatedTotal = getCustomerTotal(customer.customer_name);
-              
-              return (
+            {customers.map((customer, index) => (
                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className={`px-4 py-3 text-sm ${
                     isMissing(customer.customer_name) ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''
@@ -133,14 +127,9 @@ function CustomersTable() {
                   </td>
                   
                   <td className="px-4 py-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-green-600 dark:text-green-400">
-                        {formatCurrency(calculatedTotal)}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        (live from invoices)
-                      </span>
-                    </div>
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      {formatCurrency(getTotalExpenses())}
+                    </span>
                   </td>
                   
                   <td className={`px-4 py-3 text-sm ${
@@ -171,8 +160,7 @@ function CustomersTable() {
                     />
                   </td>
                 </tr>
-              );
-            })}
+            ))}
           </tbody>
         </table>
       </div>
@@ -183,7 +171,7 @@ function CustomersTable() {
             Total Customers: <span className="font-medium">{customers.length}</span>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 italic">
-            💡 Purchase amounts are calculated live from invoices
+            💡 Total Purchase = Sum of all products
           </div>
         </div>
       </div>
